@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zeteyo Merchant Slot Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#7C3AED;--c:#06B6D4;--ink:#1a1530;--mut:#6b6880;--line:#ebe8f2;--bg:#f7f6fb;--danger:#e11d48;--HH:56px}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);background:var(--bg);display:flex;flex-direction:column;font-size:14px}
+button{font:inherit;cursor:pointer;color:inherit}
+header.top{background:#fff;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;flex-direction:column;gap:9px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;margin-right:auto;font-size:15px}
+.logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--p),var(--c));display:grid;place-items:center;color:#fff;font-weight:800}
+.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-weight:500}
+.btn:hover{border-color:#d6d1e4}
+.btn.pri{background:var(--p);border-color:var(--p);color:#fff}
+.btn.icon{padding:7px 11px}
+.btn.del{color:var(--danger)}
+.btn.armed{background:var(--danger);border-color:var(--danger);color:#fff}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:7px 13px;font-weight:600;color:var(--mut)}
+.seg button.on{background:#f1ebff;color:var(--p)}
+.label{font-weight:700;min-width:140px}
+.chips,.stats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px 4px 5px;white-space:nowrap;font-size:12.5px;font-weight:500}
+.dot{width:14px;height:14px;border-radius:50%;flex:none;display:inline-block}
+.chip.off{opacity:.4}
+.chip small{color:var(--mut)}
+.stat{background:var(--bg);border-radius:10px;padding:6px 11px;white-space:nowrap}
+.stat b{display:block;font-size:15px}
+.stat span{font-size:11px;color:var(--mut)}
+.hint{font-size:11.5px;color:var(--mut)}
+.scroller{flex:1;overflow:auto;position:relative;background:#fff}
+.board{display:grid;min-width:100%;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.corner{position:sticky;top:0;left:0;z-index:7;background:#fff;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.ch{position:sticky;top:0;z-index:6;background:#fff;border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:7px 8px 6px;min-height:62px}
+.ch .t{font-weight:700;display:flex;align-items:center;gap:6px;font-size:13px;border:0;background:none;padding:0;text-align:left}
+.ch .s{font-size:11px;color:var(--mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch.today .t{color:var(--p)}
+.ch .hrs{border:0;background:none;padding:0;color:var(--c);font-size:11px;font-weight:600}
+.gutter{position:sticky;left:0;z-index:5;background:#fff;border-right:1px solid var(--line)}
+.gutter div{height:var(--HH);font-size:10.5px;color:var(--mut);text-align:right;padding-right:6px;transform:translateY(-7px)}
+.gutter div:first-child{visibility:hidden}
+.col{position:relative;border-right:1px solid var(--line);background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(#f6f4fa 1px,transparent 1px);background-size:100% var(--HH),100% calc(var(--HH) / 2);cursor:crosshair}
+.closed{position:absolute;left:0;right:0;background:repeating-linear-gradient(135deg,#f6f4fa 0 6px,#eeebf4 6px 12px);pointer-events:none}
+.closed span{position:absolute;top:6px;left:6px;font-size:10.5px;color:#a19cb3;font-weight:600}
+.slot{position:absolute;border-radius:8px;padding:3px 6px;font-size:11.5px;overflow:hidden;border-left:3px solid;cursor:grab;line-height:1.25;box-shadow:0 1px 2px rgba(20,10,50,.06);touch-action:auto}
+.slot .tm{font-weight:600;font-size:10.5px;color:#4a4560;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .who{font-weight:600;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .bd{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}
+.badge{font-size:10px;padding:1px 5px;border-radius:5px;background:#fff;font-weight:700}
+.badge.deal{background:#fff2c6;color:#8a5a00}
+.badge.full{background:#ffe1e7;color:var(--danger)}
+.rz{position:absolute;left:0;right:0;bottom:0;height:9px;cursor:ns-resize}
+.rz:after{content:'';position:absolute;left:50%;bottom:3px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:rgba(0,0,0,.15);opacity:0}
+.slot:hover .rz:after{opacity:1}
+.slot.dragging{opacity:.9;box-shadow:0 8px 22px rgba(60,20,140,.28);z-index:10;pointer-events:none}
+.slot.conflict{outline:2px solid var(--danger);outline-offset:-1px}
+.ghost{position:absolute;left:3px;right:3px;border-radius:8px;background:rgba(124,58,237,.14);border:1.5px dashed var(--p);font-size:11px;padding:3px 6px;color:var(--p);font-weight:700;pointer-events:none;z-index:9}
+.now{position:absolute;left:0;right:0;height:2px;background:var(--danger);z-index:8;pointer-events:none}
+.now:before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.empty{padding:40px 20px;color:var(--mut);text-align:center;grid-column:1/-1}
+.back{position:fixed;inset:0;background:rgba(20,12,40,.42);display:none;align-items:center;justify-content:center;z-index:50;padding:12px}
+.back.show{display:flex}
+.sheet{background:#fff;border-radius:16px;width:min(560px,100%);max-height:90vh;overflow:auto;padding:18px}
+@media (max-width:640px){.back{align-items:flex-end;padding:0}.sheet{border-radius:18px 18px 0 0;max-height:90vh}.hint.desk{display:none}}
+@media (min-width:641px){.hint.mob{display:none}}
+.sheet h3{margin:0 0 12px;font-size:17px}
+.sheet h4{margin:18px 0 8px;font-size:14px}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut);font-weight:600}
+.f .full{grid-column:1/-1}
+input,select{font:inherit;border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--ink);background:#fff;width:100%;min-width:0}
+input:focus,select:focus{outline:2px solid #d9c9ff;border-color:var(--p)}
+input:disabled{background:#f6f5f9;color:#aaa}
+.msg{border-radius:9px;padding:8px 10px;font-size:12.5px;margin-top:10px}
+.msg.warn{background:#fff1f3;color:var(--danger)}
+.msg.info{background:#eefbfd;color:#0e6f80}
+.acts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}
+.acts .sp{flex:1}
+.tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;background:none;padding:8px 11px;color:var(--mut);font-weight:700;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--p);border-color:var(--p)}
+table{width:100%;border-collapse:collapse}
+td{padding:6px 3px;border-bottom:1px solid var(--line);vertical-align:middle}
+td input[type=time]{padding:6px}
+.srow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.svrow{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:6px;align-items:end;padding:6px 0}
+.svrow label{font-size:10.5px;color:var(--mut);font-weight:600;display:flex;flex-direction:column;gap:3px}
+.sws{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.sw{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.sw.on{box-shadow:0 0 0 2px var(--ink)}
+pre{background:#14112a;color:#e6e1ff;border-radius:10px;padding:12px;font-size:11px;overflow:auto;max-height:46vh;white-space:pre}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none;max-width:92vw;text-align:center}
+.toast.show{opacity:1}
+.x{border:0;background:none;font-size:20px;color:var(--mut);padding:0 4px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="row">
+    <div class="brand"><div class="logo">Z</div>Zeteyo <span style="color:var(--mut);font-weight:500">Merchant · Slots</span></div>
+    <button class="btn" id="setBtn">⚙ Settings</button>
+    <button class="btn pri" id="addBtn">+ Slot</button>
+  </div>
+  <div class="row">
+    <button class="btn icon" id="prev" aria-label="Previous">‹</button>
+    <button class="btn" id="todayBtn">Today</button>
+    <button class="btn icon" id="next" aria-label="Next">›</button>
+    <div class="label" id="label"></div>
+    <div class="seg" id="seg" style="margin-left:auto"><button data-v="day">Day</button><button data-v="week">Week</button></div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="stats" id="stats"></div>
+  <div class="hint desk">Drag on empty space to create a slot · drag a slot to move it (across staff or days) · drag its bottom edge to resize · click to edit</div>
+  <div class="hint mob">Tap empty space to add a slot · tap a slot to edit · long-press then drag to move or resize</div>
+</header>
+<div class="scroller" id="scroller"><div class="board" id="board"></div></div>
+
+<!-- Slot editor -->
+<div class="back" id="slotM"><div class="sheet">
+  <div class="row" style="margin-bottom:6px"><h3 id="slotTitle" style="margin:0;flex:1">New slot</h3><button class="x" data-close>×</button></div>
+  <div class="f">
+    <label class="full">Service<select id="fSvc"></select></label>
+    <label class="full">Assign staff<select id="fStaff"></select></label>
+    <label class="full">Date<input type="date" id="fDate"></label>
+    <label>Start<input type="time" id="fStart" step="900"></label>
+    <label>End<input type="time" id="fEnd" step="900"></label>
+    <label>Capacity (people)<input type="number" id="fCap" min="1" inputmode="numeric"></label>
+    <label>Price (SGD)<input type="number" id="fPrice" min="0" step="0.5" inputmode="decimal"></label>
+    <label>Flash deal price<input type="number" id="fDeal" min="0" step="0.5" placeholder="No deal" inputmode="decimal"></label>
+    <label id="repWrap">Repeat<select id="fRep"><option value="1">Does not repeat</option><option value="4">Weekly × 4 weeks</option><option value="8">Weekly × 8 weeks</option><option value="12">Weekly × 12 weeks</option></select></label>
+    <label class="full">Internal note<input id="fNote" placeholder="Only staff can see this"></label>
+  </div>
+  <div id="fMsgs"></div>
+  <div class="acts">
+    <button class="btn del" id="fDel">Delete</button>
+    <button class="btn" id="fDup">Duplicate</button>
+    <span class="sp"></span>
+    <button class="btn" data-close>Cancel</button>
+    <button class="btn pri" id="fSave">Save</button>
+  </div>
+</div></div>
+
+<!-- Settings -->
+<div class="back" id="setM"><div class="sheet">
+  <div class="row" style="margin-bottom:6px"><h3 style="margin:0;flex:1">Settings</h3><button class="x" data-close>×</button></div>
+  <div class="tabs" id="tabs">
+    <button data-t="hours">Business hours</button><button data-t="staff">Staff</button><button data-t="services">Services</button><button data-t="data">Data model</button>
+  </div>
+  <div id="tabBody"></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const START=7*60, END=23*60, SNAP=15, HH=56, PPM=HH/60;
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DOWL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const PALETTE=['#7C3AED','#06B6D4','#F59E0B','#10B981','#EC4899','#3B82F6','#EF4444','#64748B'];
+let uid=100; const nid=p=>p+(uid++);
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const ds=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const monday=d=>{const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x};
+const hm=m=>`${pad(Math.floor(m/60))}:${pad(m%60)}`;
+const toMin=s=>{if(!s)return NaN;const[h,m]=s.split(':').map(Number);return h*60+m};
+const fh=m=>{const h=Math.round(m/6)/10;return (Number.isInteger(h)?h:h.toFixed(1))+'h'};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const snap=m=>Math.round(m/SNAP)*SNAP;
+const clampM=m=>Math.max(START,Math.min(END,m));
+
+/* ---------- State ---------- */
+const S={
+  staff:[
+    {id:'st1',name:'Aiko',role:'Senior Stylist',color:'#7C3AED'},
+    {id:'st2',name:'Ben',role:'Personal Trainer',color:'#06B6D4'},
+    {id:'st3',name:'Chloe',role:'Facial Therapist',color:'#F59E0B'}
+  ],
+  services:[
+    {id:'sv1',name:'Haircut & Style',dur:45,price:35,cap:1},
+    {id:'sv2',name:'Personal Training',dur:60,price:80,cap:1},
+    {id:'sv3',name:'Signature Facial',dur:90,price:120,cap:1},
+    {id:'sv4',name:'Group Yoga',dur:60,price:25,cap:10}
+  ],
+  weekly:{
+    0:{open:false,start:600,end:1080},
+    1:{open:true,start:540,end:1260},2:{open:true,start:540,end:1260},3:{open:true,start:540,end:1260},
+    4:{open:true,start:540,end:1260},5:{open:true,start:540,end:1260},
+    6:{open:true,start:600,end:1080}
+  },
+  overrides:{},
+  slots:[]
+};
+let view=innerWidth<700?'day':'week';
+let cur=new Date();cur.setHours(0,0,0,0);
+const hidden=new Set();
+const staffOf=id=>S.staff.find(s=>s.id===id);
+const svcOf=id=>S.services.find(s=>s.id===id);
+const getSlot=id=>S.slots.find(s=>s.id===id);
+const hoursFor=date=>S.overrides[date]||S.weekly[pd(date).getDay()];
+const openMins=h=>h.open?h.end-h.start:0;
+const hasConflict=s=>S.slots.some(o=>o.id!==s.id&&o.staffId===s.staffId&&o.date===s.date&&o.start<s.end&&s.start<o.end);
+const conflictWith=s=>S.slots.find(o=>o.id!==s.id&&o.staffId===s.staffId&&o.date===s.date&&o.start<s.end&&s.start<o.end);
+
+function seed(){
+  const add=(date,st,sv,t,booked,deal=null)=>{const v=svcOf(sv);S.slots.push({id:nid('sl'),date,staffId:st,serviceId:sv,start:t,end:t+v.dur,capacity:v.cap,booked:v.cap>1?6:booked,price:v.price,deal,note:''})};
+  for(let wk=0;wk<2;wk++)for(let d=0;d<6;d++){
+    const mon=addDays(monday(new Date()),7*wk);
+    const date=ds(addDays(mon,d)), sat=d===5;
+    (sat?[600,660,780,840]:[600,660,720,840,900,960]).forEach((t,i)=>add(date,'st1','sv1',t,(i+d)%3===0?1:0,(!sat&&d%2&&t===900)?25:null));
+    (sat?[600,720]:[540,600,1080,1140,1200]).forEach((t,i)=>add(date,'st2','sv2',t,(i+d)%2));
+    if(d===1||d===3) add(date,'st2','sv4',720,0);
+    if(d!==2) (sat?[660,840]:[660,810,960]).forEach((t,i)=>add(date,'st3','sv3',t,i===1?1:0,t===960?89:null));
+  }
+}
+seed();
+
+/* ---------- Rendering ---------- */
+const board=$('#board'), scroller=$('#scroller');
+function columns(){
+  const vis=S.staff.filter(s=>!hidden.has(s.id));
+  if(view==='day') return vis.map(s=>({date:ds(cur),staff:s}));
+  const m=monday(cur);return [...Array(7)].map((_,i)=>({date:ds(addDays(m,i)),staff:null}));
+}
+const slotsIn=c=>S.slots.filter(x=>x.date===c.date&&(c.staff?x.staffId===c.staff.id:!hidden.has(x.staffId)));
+function lanes(list){
+  const arr=[...list].sort((a,b)=>a.start-b.start||a.end-b.end);
+  const out=new Map();let cluster=[],cEnd=-1,ends=[];
+  const flush=()=>{const n=ends.length;cluster.forEach(o=>o.n=n);cluster=[];ends=[]};
+  for(const s of arr){
+    if(cluster.length&&s.start>=cEnd)flush();
+    let li=ends.findIndex(e=>e<=s.start);
+    if(li<0){li=ends.length;ends.push(s.end)}else ends[li]=s.end;
+    const o={lane:li,n:1};out.set(s.id,o);cluster.push(o);cEnd=Math.max(cEnd,s.end);
+  }
+  flush();return out;
+}
+function slotHTML(s,lay,showStaff){
+  const st=staffOf(s.staffId),sv=svcOf(s.serviceId),col=st?st.color:'#999';
+  const top=(s.start-START)*PPM,ht=Math.max(18,(s.end-s.start)*PPM-2);
+  const w=100/lay.n,left=lay.lane*w;
+  const dragging=drag&&drag.active&&drag.slotId===s.id;
+  const full=s.booked>=s.capacity;
+  return `<div class="slot${dragging?' dragging':''}${hasConflict(s)?' conflict':''}" data-id="${s.id}" style="top:${top}px;height:${ht}px;left:calc(${left}% + 2px);width:calc(${w}% - 4px);background:${col}1c;border-color:${col}">
+    <div class="tm">${hm(s.start)}–${hm(s.end)}${showStaff?` · <span style="color:${col};opacity:1">${esc(st?st.name:'Unassigned')}</span>`:''}</div>
+    <div class="nm">${esc(sv?sv.name:'Slot')}</div>
+    <div class="bd">${s.deal!=null?`<span class="badge deal">⚡ $${s.deal}</span>`:''}${full?'<span class="badge full">Full</span>':s.booked?`<span class="badge">${s.booked}/${s.capacity} booked</span>`:s.capacity>1?`<span class="badge">0/${s.capacity}</span>`:''}</div>
+    <div class="rz"></div></div>`;
+}
+function render(){
+  const cols=columns(),today=ds(new Date());
+  board.style.gridTemplateColumns=`52px repeat(${Math.max(cols.length,1)}, minmax(${view==='day'?150:118}px,1fr))`;
+  if(!cols.length){board.innerHTML='<div class="empty">All staff are hidden. Tap a staff chip above to show them.</div>';renderTop();return}
+  let h='<div class="corner"></div>';
+  cols.forEach(c=>{
+    const list=slotsIn(c),mins=list.reduce((a,s)=>a+s.end-s.start,0),bk=list.reduce((a,s)=>a+s.booked,0);
+    if(c.staff){
+      h+=`<div class="ch"><div class="t"><span class="dot" style="background:${c.staff.color}"></span>${esc(c.staff.name)}</div><div class="s">${esc(c.staff.role)}</div><div class="s"><b style="color:var(--ink)">${fh(mins)}</b> · ${list.length} slots · ${bk} booked</div></div>`;
+    }else{
+      const d=pd(c.date),hr=hoursFor(c.date),ov=!!S.overrides[c.date];
+      h+=`<div class="ch${c.date===today?' today':''}"><button class="t" data-goto="${c.date}">${DOW[d.getDay()]} ${d.getDate()}</button>
+        <button class="hrs" data-hours="${c.date}">${hr.open?`${hm(hr.start)}–${hm(hr.end)} · ${fh(openMins(hr))}`:'Closed'}${ov?' ★':''}</button>
+        <div class="s"><b style="color:var(--ink)">${fh(mins)}</b> staff · ${list.length} slots</div></div>`;
+    }
+  });
+  h+='<div class="gutter">';for(let m=START;m<END;m+=60)h+=`<div>${hm(m)}</div>`;h+='</div>';
+  const nowD=new Date(),nowM=nowD.getHours()*60+nowD.getMinutes();
+  cols.forEach(c=>{
+    const hr=hoursFor(c.date);
+    h+=`<div class="col" data-date="${c.date}" data-staff="${c.staff?c.staff.id:''}" style="height:${(END-START)*PPM}px">`;
+    if(!hr.open)h+=`<div class="closed" style="top:0;bottom:0"><span>Closed</span></div>`;
+    else{
+      if(hr.start>START)h+=`<div class="closed" style="top:0;height:${(hr.start-START)*PPM}px"></div>`;
+      if(hr.end<END)h+=`<div class="closed" style="top:${(hr.end-START)*PPM}px;bottom:0"></div>`;
+    }
+    const list=slotsIn(c),lay=lanes(list);
+    list.forEach(s=>h+=slotHTML(s,lay.get(s.id),!c.staff));
+    if(c.date===today&&nowM>=START&&nowM<=END)h+=`<div class="now" style="top:${(nowM-START)*PPM}px"></div>`;
+    h+='</div>';
+  });
+  board.innerHTML=h;
+  renderTop();
+}
+function renderTop(){
+  const w0=monday(cur),w6=addDays(w0,6);
+  $('#label').textContent=view==='day'
+    ?`${DOW[cur.getDay()]}, ${cur.getDate()} ${MON[cur.getMonth()]} ${cur.getFullYear()}`
+    :(w0.getMonth()===w6.getMonth()?`${w0.getDate()} – ${w6.getDate()} ${MON[w6.getMonth()]} ${w6.getFullYear()}`:`${w0.getDate()} ${MON[w0.getMonth()]} – ${w6.getDate()} ${MON[w6.getMonth()]} ${w6.getFullYear()}`);
+  document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));
+  const dates=view==='day'?[ds(cur)]:[...Array(7)].map((_,i)=>ds(addDays(w0,i)));
+  const inRange=S.slots.filter(s=>dates.includes(s.date));
+  $('#chips').innerHTML=S.staff.map(st=>{
+    const m=inRange.filter(s=>s.staffId===st.id).reduce((a,s)=>a+s.end-s.start,0);
+    return `<button class="chip${hidden.has(st.id)?' off':''}" data-chip="${st.id}"><span class="dot" style="background:${st.color}"></span>${esc(st.name)} <small>${fh(m)}</small></button>`;
+  }).join('')+`<button class="chip" data-addstaff style="padding-left:10px">+ Staff</button>`;
+  const vis=S.staff.filter(s=>!hidden.has(s.id));
+  const vs=inRange.filter(s=>!hidden.has(s.staffId));
+  const open=dates.reduce((a,d)=>a+openMins(hoursFor(d)),0);
+  const staffM=vs.reduce((a,s)=>a+s.end-s.start,0);
+  const bk=vs.reduce((a,s)=>a+s.booked,0),seats=vs.reduce((a,s)=>a+s.capacity,0);
+  const util=open&&vis.length?Math.round(staffM/(open*vis.length)*100):0;
+  $('#stats').innerHTML=[
+    [fh(open),view==='day'?'Shop open today':'Shop open this week'],
+    [fh(staffM),'Staff hours scheduled'],
+    [vs.length,'Slots'],
+    [`${bk}/${seats}`,'Seats booked'],
+    [util+'%','Staff utilisation']
+  ].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+}
+
+/* ---------- Toolbar ---------- */
+$('#prev').onclick=()=>{cur=addDays(cur,view==='day'?-1:-7);render()};
+$('#next').onclick=()=>{cur=addDays(cur,view==='day'?1:7);render()};
+$('#todayBtn').onclick=()=>{cur=new Date();cur.setHours(0,0,0,0);render();scrollToNow()};
+$('#seg').onclick=e=>{const b=e.target.closest('button');if(!b)return;view=b.dataset.v;render()};
+$('#chips').onclick=e=>{
+  if(e.target.closest('[data-addstaff]')){openSettings('staff');return}
+  const b=e.target.closest('[data-chip]');if(!b)return;
+  const id=b.dataset.chip;hidden.has(id)?hidden.delete(id):hidden.add(id);render();
+};
+$('#addBtn').onclick=()=>{
+  const vis=S.staff.find(s=>!hidden.has(s.id))||S.staff[0];
+  const date=view==='day'?ds(cur):(monday(cur)<=new Date()&&new Date()<=addDays(monday(cur),7)?ds(new Date()):ds(monday(cur)));
+  const hr=hoursFor(date),st=hr.open?hr.start:600,sv=S.services[0];
+  openSlot(null,{date,staffId:vis?vis.id:'',start:st,end:st+(sv?sv.dur:60)});
+};
+$('#setBtn').onclick=()=>openSettings('hours');
+board.addEventListener('click',e=>{
+  const g=e.target.closest('[data-goto]');if(g){cur=pd(g.dataset.goto);view='day';render();return}
+  const h=e.target.closest('[data-hours]');if(h){openSettings('hours',h.dataset.hours)}
+});
+board.addEventListener('contextmenu',e=>{if(e.target.closest('.col'))e.preventDefault()});
+function scrollToNow(){
+  const n=new Date(),m=n.getHours()*60+n.getMinutes();
+  const hr=hoursFor(view==='day'?ds(cur):ds(new Date()));
+  const target=(m>=START&&m<END)?m-60:(hr.open?hr.start:540);
+  scroller.scrollTop=Math.max(0,(target-30-START)*PPM);
+}
+
+/* ---------- Drag / tap interactions ---------- */
+let drag=null;
+const minAt=(colEl,y)=>START+(y-colEl.getBoundingClientRect().top)/PPM;
+function colFor(s){return view==='day'?board.querySelector(`.col[data-date="${s.date}"][data-staff="${s.staffId}"]`):board.querySelector(`.col[data-date="${s.date}"]`)}
+board.addEventListener('pointerdown',e=>{
+  if(e.button>0||e.target.closest('.ch,.gutter,.corner'))return;
+  const colEl=e.target.closest('.col');if(!colEl)return;
+  const slotEl=e.target.closest('.slot');
+  if(e.pointerType!=='touch')e.preventDefault();
+  drag={mode:slotEl?(e.target.classList.contains('rz')?'resize':'move'):'create',id:e.pointerId,x0:e.clientX,y0:e.clientY,touch:e.pointerType==='touch',colEl,slotId:slotEl?slotEl.dataset.id:null,active:false,moved:false};
+  if(drag.touch)drag.timer=setTimeout(()=>{if(drag&&!drag.active){activate();try{navigator.vibrate&&navigator.vibrate(12)}catch(_){}}},400);
+});
+window.addEventListener('pointermove',e=>{
+  if(!drag||e.pointerId!==drag.id)return;
+  const dist=Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0);
+  if(!drag.active){
+    if(drag.touch){if(dist>8){clearTimeout(drag.timer);drag=null}return}
+    if(dist<5)return;activate();
+  }
+  const r=scroller.getBoundingClientRect();
+  if(e.clientY<r.top+40)scroller.scrollTop-=12;else if(e.clientY>r.bottom-40)scroller.scrollTop+=12;
+  update(e.clientX,e.clientY);
+});
+window.addEventListener('pointerup',e=>{
+  if(!drag||e.pointerId!==drag.id)return;
+  clearTimeout(drag.timer);const d=drag;
+  if(d.active)finish();else{drag=null;tap(d)}
+});
+window.addEventListener('pointercancel',()=>{if(!drag)return;clearTimeout(drag.timer);if(drag.active)cancelDrag();drag=null});
+document.addEventListener('touchmove',e=>{if(drag&&drag.active)e.preventDefault()},{passive:false});
+
+function activate(){
+  const d=drag;d.active=true;
+  if(d.mode==='create'){
+    d.anchor=clampM(snap(minAt(d.colEl,d.y0)));
+    d.ghost=document.createElement('div');d.ghost.className='ghost';d.colEl.appendChild(d.ghost);
+    drawGhost(d.anchor,Math.min(END,d.anchor+(d.touch?60:SNAP)));
+  }else{
+    const s=getSlot(d.slotId);d.orig={...s};d.offset=minAt(d.colEl,d.y0)-s.start;render();
+  }
+}
+function drawGhost(s,e){const d=drag;d.s=s;d.e=e;d.ghost.style.top=(s-START)*PPM+'px';d.ghost.style.height=(e-s)*PPM+'px';d.ghost.textContent=`${hm(s)}–${hm(e)} · ${fh(e-s)}`}
+function update(x,y){
+  const d=drag;
+  if(d.mode==='create'){
+    const m=clampM(snap(minAt(d.colEl,y)));
+    if(m>=d.anchor)drawGhost(d.anchor,Math.max(m,d.anchor+SNAP));else drawGhost(m,d.anchor+SNAP);
+    d.moved=true;return;
+  }
+  const s=getSlot(d.slotId);
+  if(d.mode==='move'){
+    const el=document.elementFromPoint(x,y);let c=el&&el.closest('.col');
+    if(!c)c=colFor(s);if(!c)return;
+    const dur=d.orig.end-d.orig.start;
+    let st=snap(minAt(c,y)-d.offset);st=Math.max(START,Math.min(END-dur,st));
+    s.start=st;s.end=st+dur;s.date=c.dataset.date;if(c.dataset.staff)s.staffId=c.dataset.staff;
+  }else{
+    const c=colFor(s);if(!c)return;
+    s.end=Math.max(s.start+SNAP,Math.min(END,snap(minAt(c,y))));
+  }
+  d.moved=s.start!==d.orig.start||s.end!==d.orig.end||s.date!==d.orig.date||s.staffId!==d.orig.staffId;
+  render();
+}
+function finish(){
+  const d=drag;drag=null;
+  if(d.mode==='create'){
+    d.ghost.remove();
+    openSlot(null,{date:d.colEl.dataset.date,staffId:d.colEl.dataset.staff||defaultStaff(),start:d.s,end:d.e,keepTime:true});return;
+  }
+  const s=getSlot(d.slotId);
+  if(!d.moved){render();openSlot(s);return}
+  if(hasConflict(s)){const o=conflictWith(s);Object.assign(s,d.orig);render();toast(`${staffOf(o.staffId).name} is already busy ${hm(o.start)}–${hm(o.end)}`);return}
+  render();
+  const hr=hoursFor(s.date);
+  if(s.booked)toast(`Moved · ${s.booked} customer${s.booked>1?'s':''} will be notified of the change`);
+  else if(!hr.open||s.start<hr.start||s.end>hr.end)toast('Saved · note: this slot is outside business hours');
+  else toast(`${staffOf(s.staffId).name} · ${hm(s.start)}–${hm(s.end)}`);
+}
+function cancelDrag(){if(drag.mode==='create')drag.ghost&&drag.ghost.remove();else Object.assign(getSlot(drag.slotId),drag.orig);render()}
+function tap(d){
+  if(d.mode==='create'){
+    const m=Math.max(START,Math.min(END-30,Math.floor(minAt(d.colEl,d.y0)/30)*30));
+    openSlot(null,{date:d.colEl.dataset.date,staffId:d.colEl.dataset.staff||defaultStaff(),start:m,end:m+60});
+  }else openSlot(getSlot(d.slotId));
+}
+const defaultStaff=()=>{const s=S.staff.find(s=>!hidden.has(s.id))||S.staff[0];return s?s.id:''};
+
+/* ---------- Slot editor ---------- */
+let editing=null,delArm=false;
+const F=id=>$('#'+id);
+function openSlot(s,p){
+  if(!S.services.length){toast('Add a service first (Settings → Services)');return}
+  if(!S.staff.length){toast('Add a staff member first');return}
+  editing=s?s.id:null;delArm=false;F('fDel').classList.remove('armed');F('fDel').textContent='Delete';
+  let v=s;
+  if(!s){const sv=S.services[0];v={serviceId:sv.id,staffId:p.staffId,date:p.date,start:p.start,end:p.keepTime?p.end:Math.min(END,p.start+sv.dur),capacity:sv.cap,price:sv.price,deal:null,note:'',booked:0}}
+  F('fSvc').innerHTML=S.services.map(x=>`<option value="${x.id}">${esc(x.name)} · ${x.dur} min · $${x.price}</option>`).join('');
+  F('fStaff').innerHTML=S.staff.map(x=>`<option value="${x.id}">${esc(x.name)} — ${esc(x.role)}</option>`).join('');
+  F('fSvc').value=v.serviceId;F('fStaff').value=v.staffId;F('fDate').value=v.date;
+  F('fStart').value=hm(v.start);F('fEnd').value=hm(v.end);F('fCap').value=v.capacity;F('fPrice').value=v.price;
+  F('fDeal').value=v.deal??'';F('fNote').value=v.note||'';F('fRep').value='1';
+  F('repWrap').style.display=s?'none':'';F('fDel').style.display=s?'':'none';F('fDup').style.display=s?'':'none';
+  F('slotTitle').textContent=s?'Edit slot':'New slot';
+  validate();show('slotM');
+}
+function readForm(){return{serviceId:F('fSvc').value,staffId:F('fStaff').value,date:F('fDate').value,start:toMin(F('fStart').value),end:toMin(F('fEnd').value),capacity:Math.max(1,parseInt(F('fCap').value)||1),price:parseFloat(F('fPrice').value)||0,deal:F('fDeal').value===''?null:parseFloat(F('fDeal').value),note:F('fNote').value.trim()}}
+function validate(){
+  const c=readForm(),orig=editing?getSlot(editing):null,warns=[],infos=[];
+  if(!c.date||isNaN(c.start)||isNaN(c.end))warns.push('Pick a date, start and end time.');
+  else{
+    if(c.end<=c.start)warns.push('End time must be after start time.');
+    if(c.start%SNAP||c.end%SNAP)infos.push('Times will snap to 15-minute steps.');
+    const o=conflictWith({...c,id:editing});
+    if(o&&c.end>c.start)warns.push(`${staffOf(c.staffId).name} already has ${esc(svcOf(o.serviceId)?.name||'a slot')} ${hm(o.start)}–${hm(o.end)} on this day.`);
+    const hr=hoursFor(c.date);
+    if(!hr.open)infos.push(`The shop is closed on this date. The slot will still be bookable.`);
+    else if(c.start<hr.start||c.end>hr.end)infos.push(`Outside business hours (${hm(hr.start)}–${hm(hr.end)}).`);
+    const sv=svcOf(c.serviceId);if(sv&&c.end-c.start!==sv.dur&&c.end>c.start)infos.push(`Slot is ${c.end-c.start} min; the service normally takes ${sv.dur} min.`);
+  }
+  if(c.deal!=null&&c.deal>=c.price)warns.push('Flash deal price must be lower than the normal price.');
+  if(orig&&orig.booked){
+    if(c.capacity<orig.booked)warns.push(`Capacity can't go below ${orig.booked} (already booked).`);
+    infos.push(`${orig.booked} of ${orig.capacity} seat${orig.capacity>1?'s':''} booked. Customers will be notified if you change the time or staff.`);
+  }
+  F('fMsgs').innerHTML=warns.map(w=>`<div class="msg warn">${w}</div>`).join('')+infos.map(w=>`<div class="msg info">${w}</div>`).join('');
+  F('fSave').disabled=!!warns.length;F('fSave').style.opacity=warns.length?.5:1;
+  return{ok:!warns.length,c};
+}
+['fSvc','fStaff','fDate','fStart','fEnd','fCap','fPrice','fDeal'].forEach(id=>F(id).addEventListener('input',validate));
+F('fSvc').addEventListener('change',()=>{const sv=svcOf(F('fSvc').value),st=toMin(F('fStart').value);if(!sv)return;if(!isNaN(st))F('fEnd').value=hm(Math.min(END,st+sv.dur));F('fPrice').value=sv.price;if(!editing||!getSlot(editing).booked)F('fCap').value=sv.cap;validate()});
+F('fStart').addEventListener('change',()=>{const sv=svcOf(F('fSvc').value),st=toMin(F('fStart').value);if(sv&&!isNaN(st)){F('fEnd').value=hm(Math.min(END,st+sv.dur));validate()}});
+F('fSave').onclick=()=>{
+  const{ok,c}=validate();if(!ok)return;
+  c.start=snap(c.start);c.end=snap(c.end);
+  if(editing){
+    const s=getSlot(editing),moved=s.start!==c.start||s.end!==c.end||s.date!==c.date||s.staffId!==c.staffId;
+    Object.assign(s,c);hide('slotM');render();
+    toast(s.booked&&moved?`Saved · ${s.booked} customer${s.booked>1?'s':''} will be notified`:'Slot updated');
+  }else{
+    const n=+F('fRep').value||1;let made=0,skip=0;
+    for(let i=0;i<n;i++){
+      const ns={...c,id:nid('sl'),booked:0,date:ds(addDays(pd(c.date),7*i))};
+      if(hasConflict(ns)){skip++;continue}S.slots.push(ns);made++;
+    }
+    hide('slotM');render();
+    toast(skip?`Created ${made} slots · skipped ${skip} (staff already busy)`:`Created ${made} slot${made>1?'s':''}`);
+  }
+};
+F('fDel').onclick=()=>{
+  const s=getSlot(editing);if(!s)return;
+  if(!delArm){delArm=true;F('fDel').classList.add('armed');F('fDel').textContent=s.booked?`Cancel ${s.booked} booking${s.booked>1?'s':''} & delete`:'Tap again to delete';return}
+  S.slots=S.slots.filter(x=>x.id!==editing);hide('slotM');render();
+  toast(s.booked?`Slot deleted · ${s.booked} booking${s.booked>1?'s':''} cancelled and refunded from escrow`:'Slot deleted');
+};
+F('fDup').onclick=()=>{
+  const s=getSlot(editing);if(!s)return;const dur=s.end-s.start;
+  let st=s.end;const ns={...s,id:nid('sl'),booked:0};
+  while(st+dur<=END){ns.start=st;ns.end=st+dur;if(!hasConflict(ns))break;st+=SNAP}
+  if(st+dur>END){toast(`No free time left today for ${staffOf(s.staffId).name}`);return}
+  S.slots.push(ns);hide('slotM');render();toast(`Duplicated to ${hm(ns.start)}–${hm(ns.end)}`);
+};
+
+/* ---------- Settings ---------- */
+let tab='hours',oDate=null,newColor=PALETTE[3];
+function openSettings(t,date){tab=t;if(date)oDate=date;else if(!oDate)oDate=ds(cur);renderSettings();show('setM')}
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.t;renderSettings()};
+function renderSettings(){
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  const body=$('#tabBody');
+  if(tab==='hours'){
+    let tot=0;
+    const rows=[1,2,3,4,5,6,0].map(k=>{const h=S.weekly[k],o=openMins(h);tot+=o;return `<tr>
+      <td><label style="display:flex;gap:7px;align-items:center;font-weight:600"><input type="checkbox" style="width:auto" data-wk="${k}" data-f="open" ${h.open?'checked':''}>${DOW[k]}</label></td>
+      <td><input type="time" step="900" value="${hm(h.start)}" data-wk="${k}" data-f="start" ${h.open?'':'disabled'}></td>
+      <td><input type="time" step="900" value="${hm(h.end)}" data-wk="${k}" data-f="end" ${h.open?'':'disabled'}></td>
+      <td style="text-align:right;font-weight:700;white-space:nowrap">${h.open?fh(o):'<span style="color:var(--mut)">Closed</span>'}</td></tr>`}).join('');
+    const ov=S.overrides[oDate];
+    const ovList=Object.keys(S.overrides).sort().map(d=>{const h=S.overrides[d],x=pd(d);return `<div class="srow"><div style="flex:1"><b>${DOW[x.getDay()]} ${x.getDate()} ${MON[x.getMonth()]}</b><div class="hint">${h.open?`${hm(h.start)}–${hm(h.end)} · ${fh(openMins(h))}`:'Closed all day'}</div></div><button class="btn del" data-rmov="${d}">Remove</button></div>`}).join('');
+    body.innerHTML=`
+      <div class="hint" style="margin-bottom:8px">Set how many hours you're open each day. Customers can only book within these hours unless you add a slot outside them.</div>
+      <table><tbody>${rows}</tbody></table>
+      <div style="display:flex;justify-content:space-between;padding:10px 3px;font-weight:700"><span>Total per week</span><span>${fh(tot)}</span></div>
+      <h4>Special hours for one date</h4>
+      <div class="hint" style="margin-bottom:8px">For public holidays, events or staff training days.</div>
+      <div class="f">
+        <label>Date<input type="date" id="oD" value="${oDate}"></label>
+        <label>Hours<select id="oM"><option value="weekly">Use weekly hours</option><option value="custom">Custom hours</option><option value="closed">Closed</option></select></label>
+        <label>Open<input type="time" step="900" id="oS"></label>
+        <label>Close<input type="time" step="900" id="oE"></label>
+      </div>
+      <div class="acts"><span class="hint" id="oInfo"></span><span class="sp"></span><button class="btn pri" id="oSave">Apply to date</button></div>
+      ${ovList?`<h4>Upcoming special hours</h4>${ovList}`:''}`;
+    const fill=()=>{
+      const d=$('#oD').value;oDate=d;const o=S.overrides[d],wk=S.weekly[pd(d).getDay()];
+      $('#oM').value=o?(o.open?'custom':'closed'):'weekly';
+      const src=o&&o.open?o:wk;$('#oS').value=hm(src.start);$('#oE').value=hm(src.end);syncO();
+    };
+    const syncO=()=>{const m=$('#oM').value;$('#oS').disabled=$('#oE').disabled=m!=='custom';
+      const wk=S.weekly[pd($('#oD').value).getDay()];
+      $('#oInfo').textContent=m==='weekly'?`Weekly: ${wk.open?`${hm(wk.start)}–${hm(wk.end)}`:'Closed'}`:m==='closed'?'Closed all day':(()=>{const a=toMin($('#oS').value),b=toMin($('#oE').value);return b>a?`${fh(b-a)} open`:''})()};
+    fill();
+    $('#oD').onchange=fill;$('#oM').onchange=syncO;$('#oS').oninput=syncO;$('#oE').oninput=syncO;
+    $('#oSave').onclick=()=>{
+      const d=$('#oD').value,m=$('#oM').value;if(!d)return;
+      if(m==='weekly')delete S.overrides[d];
+      else if(m==='closed')S.overrides[d]={open:false,start:540,end:1260};
+      else{const a=snap(toMin($('#oS').value)),b=snap(toMin($('#oE').value));if(!(b>a)){toast('Close time must be after open time');return}S.overrides[d]={open:true,start:a,end:b}}
+      render();renderSettings();toast('Special hours saved');
+    };
+    body.querySelectorAll('[data-rmov]').forEach(b=>b.onclick=()=>{delete S.overrides[b.dataset.rmov];render();renderSettings()});
+    body.querySelectorAll('[data-wk]').forEach(inp=>inp.onchange=()=>{
+      const h=S.weekly[inp.dataset.wk],f=inp.dataset.f;
+      if(f==='open')h.open=inp.checked;
+      else{const v=snap(toMin(inp.value)),t={...h,[f]:v};if(isNaN(v)||t.end<=t.start){toast('Close time must be after open time');renderSettings();return}h[f]=v}
+      render();renderSettings();
+    });
+  }
+  if(tab==='staff'){
+    const w0=monday(cur),dates=[...Array(7)].map((_,i)=>ds(addDays(w0,i)));
+    body.innerHTML=S.staff.map(st=>{const l=S.slots.filter(s=>s.staffId===st.id&&dates.includes(s.date));const m=l.reduce((a,s)=>a+s.end-s.start,0);
+      return `<div class="srow"><span class="dot" style="background:${st.color};width:18px;height:18px"></span><div style="flex:1;min-width:0"><b>${esc(st.name)}</b><div class="hint">${esc(st.role)} · ${l.length} slots · ${fh(m)} this week</div></div><button class="btn del" data-rmst="${st.id}">Remove</button></div>`}).join('')
+      +`<h4>Add staff</h4><div class="f"><label>Name<input id="nsN" placeholder="e.g. Daniel"></label><label>Role<input id="nsR" placeholder="e.g. Nail Technician"></label></div>
+      <div class="sws">${PALETTE.map(c=>`<button class="sw${c===newColor?' on':''}" data-col="${c}" style="background:${c}" aria-label="colour"></button>`).join('')}</div>
+      <button class="btn pri" id="nsAdd">Add staff</button>`;
+    body.querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{newColor=b.dataset.col;body.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b))});
+    $('#nsAdd').onclick=()=>{const n=$('#nsN').value.trim();if(!n){toast('Enter a name');return}S.staff.push({id:nid('st'),name:n,role:$('#nsR').value.trim()||'Staff',color:newColor});render();renderSettings();toast(`${n} added`)};
+    body.querySelectorAll('[data-rmst]').forEach(b=>b.onclick=()=>{
+      const id=b.dataset.rmst,st=staffOf(id),l=S.slots.filter(s=>s.staffId===id),bk=l.reduce((a,s)=>a+s.booked,0);
+      if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent=l.length?`Delete ${l.length} slots${bk?` (${bk} booked)`:''}?`:'Confirm';return}
+      S.staff=S.staff.filter(s=>s.id!==id);S.slots=S.slots.filter(s=>s.staffId!==id);hidden.delete(id);render();renderSettings();toast(`${st.name} removed`);
+    });
+  }
+  if(tab==='services'){
+    body.innerHTML=`<div class="hint" style="margin-bottom:6px">Duration sets the default slot length. Capacity above 1 makes it a group class.</div>`
+      +S.services.map(v=>`<div class="svrow" data-sv="${v.id}">
+        <label>Name<input data-f="name" value="${esc(v.name)}"></label>
+        <label>Minutes<input type="number" min="15" step="15" data-f="dur" value="${v.dur}"></label>
+        <label>Price $<input type="number" min="0" step="0.5" data-f="price" value="${v.price}"></label>
+        <label>Capacity<input type="number" min="1" data-f="cap" value="${v.cap}"></label>
+        <button class="x" data-rmsv="${v.id}" aria-label="Remove">×</button></div>`).join('')
+      +`<div class="acts"><button class="btn" id="svAdd">+ Add service</button></div>`;
+    body.querySelectorAll('[data-sv] input').forEach(inp=>inp.onchange=()=>{
+      const v=svcOf(inp.closest('[data-sv]').dataset.sv),f=inp.dataset.f;
+      v[f]=f==='name'?(inp.value.trim()||v.name):f==='price'?Math.max(0,parseFloat(inp.value)||0):f==='dur'?Math.max(15,snap(parseInt(inp.value)||60)):Math.max(1,parseInt(inp.value)||1);
+      render();renderSettings();
+    });
+    body.querySelectorAll('[data-rmsv]').forEach(b=>b.onclick=()=>{const id=b.dataset.rmsv,n=S.slots.filter(s=>s.serviceId===id).length;if(n){toast(`Used by ${n} slots — change or delete those first`);return}S.services=S.services.filter(s=>s.id!==id);renderSettings()});
+    $('#svAdd').onclick=()=>{S.services.push({id:nid('sv'),name:'New service',dur:60,price:50,cap:1});renderSettings()};
+  }
+  if(tab==='data'){
+    const json=JSON.stringify({
+      staff:S.staff,services:S.services,
+      business_hours:Object.fromEntries(Object.entries(S.weekly).map(([k,h])=>[DOWL[k].toLowerCase(),h.open?{open:hm(h.start),close:hm(h.end)}:null])),
+      special_hours:Object.fromEntries(Object.entries(S.overrides).map(([d,h])=>[d,h.open?{open:hm(h.start),close:hm(h.end)}:null])),
+      slots:S.slots.slice(0,3).map(s=>({id:s.id,staff_id:s.staffId,service_id:s.serviceId,date:s.date,start:hm(s.start),end:hm(s.end),capacity:s.capacity,booked:s.booked,price:s.price,deal_price:s.deal,note:s.note})),
+      _note:`${S.slots.length} slots total — first 3 shown`
+    },null,2);
+    body.innerHTML=`<div class="hint" style="margin-bottom:8px">The shape of the data this screen saves, for the backend team. Overlaps are blocked per staff member; store times in the merchant's timezone (Asia/Singapore).</div><pre id="js">${esc(json)}</pre><div class="acts"><span class="sp"></span><button class="btn pri" id="cpy">Copy JSON</button></div>`;
+    $('#cpy').onclick=async()=>{try{await navigator.clipboard.writeText(json);toast('Copied')}catch(_){const r=document.createRange();r.selectNodeContents($('#js'));const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Selected — copy it manually')}};
+  }
+}
+
+/* ---------- Modals & toast ---------- */
+function show(id){$('#'+id).classList.add('show')}
+function hide(id){$('#'+id).classList.remove('show')}
+document.querySelectorAll('.back').forEach(b=>{
+  b.addEventListener('click',e=>{if(e.target===b||e.target.closest('[data-close]'))b.classList.remove('show')});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.back.show').forEach(b=>b.classList.remove('show'))});
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2600)}
+
+render();scrollToNow();
+setInterval(()=>{if(!drag)render()},60000);
+</script>
+</body>
+</html>
